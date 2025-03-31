@@ -43,7 +43,7 @@ class Login(viewsets.ViewSet):
         
         try:
             user = User.objects.get(email=email) 
-        except user.DoesNotExist:
+        except User.DoesNotExist:
             return Response({"error":'User not found'},status=status.HTTP_404_NOT_FOUND)
         
         if not check_password(password,user.password):
@@ -85,10 +85,16 @@ class TaskView(viewsets.ViewSet):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) 
     
     def list(self,request):
-        task_all = Task.objects.all()
-        serializer = TaskSerializer(task_all,many=True)
-        return Response(serializer.data)       
-        
+        print("Inside list function")  # Debugging
+        print("Authenticated User:", request.user.role)  
+        if request.user.role and request.user.role.name == "SuperAdmin":  # ✅ Admin can see all tasks
+            print("data:",request.user.role)
+            tasks = Task.objects.all()
+        else:
+            tasks = Task.objects.filter(user=request.user)  # ✅ Users see only their tasks
+
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
         
